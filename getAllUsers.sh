@@ -4,10 +4,11 @@ trap "kill -- -$BASHPID" SIGINT SIGTERM EXIT
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
 # Initialize our own variables:
-hasuser=0
-user=""
 terminal=""
 forceupdate=0
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+LOGFILE=$DIR/users.log
 
 spinner()
 {
@@ -25,20 +26,11 @@ spinner()
 }
 
 
-#gatherusers() {
-#	for HOST in moore{00..24} sslab{00..24} borg{00..24} xinu{00..21} sac{01..13} pod{1..5}-{1..5} pod0-0 mc{01..18}; do
-#		echo $HOST
-# who > who.txt && sed -i 's/^/data /' who.txt && awk '{ print $1,$2,$3 }' who.txt >> users.log 
-#		ssh -o StrictHostKeyChecking=no `whoami`@${HOST}.cs.purdue.edu "who > who.txt && sed -i 's/^/${HOST} /' who.txt && awk '{ print \$1,\$2,\$3 }' who.txt >> ~/users.log"  >>/tmp/deploy_test 2>&1
-#	done
-
-#	echo "Done."
-#}
-LOGFILE=~/users.log
-
 buildusers()
 {
-	rm $LOGFILE
+	if [ -f $LOGFILE ]; then
+		rm $LOGFILE
+	fi
 	./gatherusers.bash & 
 	spinner $!
 }
@@ -46,13 +38,17 @@ buildusers()
 attemptbuildusers() {
 	if [ $forceupdate -eq 1 ]; then
 		buildusers
-	else 
-		if [ `find "$LOGFILE" -mmin +30` ]; then
-			buildusers
-		else
-			if [ $verbose ]; then
-				echo Using old logfile.
+	else
+		if [ -f $LOGFILE ]; then
+			if [ `find "$LOGFILE" -mmin +30` ]; then
+				buildusers
+			else
+				if [ $verbose ]; then
+					echo Using old logfile.
+				fi
 			fi
+		else 
+			buildusers
 		fi
 	fi
 }
@@ -79,8 +75,7 @@ while getopts "h?u:t:fv" opt; do
         show_help
         exit 0
         ;;
-    u)  hasuser=1
-    	user=$OPTARG
+    u)  user=$OPTARG
         ;;
     t)  terminal=$OPTARG
         ;;
@@ -99,8 +94,9 @@ if [ $verbose ]; then
 	echo "user=$user, terminal='$terminal', verbose=$verbose, forceupdate=$forceupdate, Leftovers: $@"
 fi
 
-if [[ $hasuser ]]; then
-	attemptbuildusers 
+if [ $user ]; then
+	attemptbuildusers
+	if [ $verbose ]; then echo "Search completed"; fi
 	found=$(grep $user ~/users.log)
 	if [ -n "$found"  ]; then
 		echo "The user $user is logged in on: $found"

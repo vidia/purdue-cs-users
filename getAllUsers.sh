@@ -31,7 +31,7 @@ buildusers()
 	if [ -f $LOGFILE ]; then
 		rm $LOGFILE
 	fi
-	./gatherusers.bash & 
+	./gatherusers.bash $LOGFILE  & 
 	spinner $!
 }
 
@@ -97,7 +97,7 @@ fi
 if [ $user ]; then
 	attemptbuildusers
 	if [ $verbose ]; then echo "Search completed"; fi
-	found=$(grep $user ~/users.log)
+	found=$(grep $user $LOGFILE | awk '{ print $1 }' | uniq)
 	if [ -n "$found"  ]; then
 		echo "The user $user is logged in on: $found"
 	else

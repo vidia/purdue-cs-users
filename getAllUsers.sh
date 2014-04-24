@@ -1,10 +1,18 @@
 #!/bin/bash
 trap "kill -- -$BASHPID" SIGINT SIGTERM EXIT
+# A POSIX variable
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
+
+# Initialize our own variables:
+hasuser=0
+user=""
+terminal=""
+forceupdate=0
 
 spinner()
 {
     local pid=$1
-    local delay=0.75
+    local delay=0.5
     local spinstr='|/-\'
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
         local temp=${spinstr#?}
@@ -28,13 +36,24 @@ spinner()
 #}
 LOGFILE=~/users.log
 
-buildusers() { 
-	if [ find "$LOGFILE" -mmin -30 ]; then
-		echo Using old logfile.
+buildusers()
+{
+	rm $LOGFILE
+	./gatherusers.bash & 
+	spinner $!
+}
+
+attemptbuildusers() {
+	if [ $forceupdate -eq 1 ]; then
+		buildusers
 	else 
-		rm $LOGFILE
-		./gatherusers.bash & 
-		spinner $!
+		if [ `find "$LOGFILE" -mmin +30` ]; then
+			buildusers
+		else
+			if [ $verbose ]; then
+				echo Using old logfile.
+			fi
+		fi
 	fi
 }
 
@@ -53,15 +72,6 @@ show_help()
 	echo -e "\t\tDisplay this help"
 }
 
-# A POSIX variable
-OPTIND=1         # Reset in case getopts has been used previously in the shell.
-
-# Initialize our own variables:
-hasuser=0
-user=""
-terminal=""
-forceupdate=0
-verbose=0
 
 while getopts "h?u:t:fv" opt; do
     case "$opt" in
@@ -85,13 +95,18 @@ shift $((OPTIND-1))
 
 [ "$1" = "--" ] && shift
 
-echo "user=$user, terminal='$terminal', verbose=$verbose, forceupdate=$forceupdate, Leftovers: $@"
-
+if [ $verbose ]; then
+	echo "user=$user, terminal='$terminal', verbose=$verbose, forceupdate=$forceupdate, Leftovers: $@"
+fi
 
 if [[ $hasuser ]]; then
-	buildusers
-	echo Done with search! 
-	echo $(grep $user ~/users.log)
+	attemptbuildusers 
+	found=$(grep $user ~/users.log)
+	if [ -n "$found"  ]; then
+		echo "The user $user is logged in on: $found"
+	else
+		echo "The user $user is not logged in."
+	fi
 fi
 exit 0
 

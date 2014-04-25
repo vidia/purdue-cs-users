@@ -4,7 +4,9 @@ Have you ever wanted to figure out exactly where a person was logged in from?
 
 This utility allows you to do exactly that. It polls all the CS computers and executes a search for the given user. 
 
+## Plans for project
 
+I will eventually integrate this with messaging a user so that you can input a username and it will connect you to their terminal to send a message. 
 
 
 ### Usage

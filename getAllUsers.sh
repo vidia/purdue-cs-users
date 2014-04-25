@@ -99,7 +99,7 @@ if [ $user ]; then
 	if [ $verbose ]; then echo "Search completed"; fi
 	found=$(grep $user $LOGFILE | awk '{ print $1 }' | uniq)
 	if [ -n "$found"  ]; then
-		echo "The user $user is logged in on: $found"
+		echo -e "The user $user is logged in on:\n$found"
 	else
 		echo "The user $user is not logged in."
 	fi

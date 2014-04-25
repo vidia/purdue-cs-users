@@ -10,14 +10,26 @@ This utility allows you to do exactly that. It polls all the CS computers and ex
 ### Usage
 
 Search for users on Purdue CS computers.
+
 Usage: ./getAllUsers.bash -u USERNAME [-t TERMINAL] [-v|-f|-?|-h]
+
 	-u USERNAME
+	
 		The username of the user to search for.
+		
 	-t TERMINAL
+	
 		The terminal the user is logged in on. Allows for immediate messaging of a user.
+		
 	-v
+	
 		Verbose output
+		
 	-f
+	
 		Force an update of the users log. This can take a while, so default operation reuses files under 30m old
+		
 	-h | -?
+	
 		Display this help
+		
